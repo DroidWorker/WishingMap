@@ -1,41 +1,46 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wishmap/data/models.dart';
 import 'dart:math';
 import 'package:flutter/physics.dart';
+import 'package:wishmap/provider/provider.dart';
+import 'dart:ui' as ui;
 
 import '../navigation/navigation_block.dart';
+import '../repository/Repository.dart';
 
 class CircleWidget extends StatefulWidget {
+  final itemId;
   final Circle circle;
   final double size;
   final Function(double) onRotate;
   final Function(DragEndDetails) onEndRotate;
+  final Function(int id, int itemId) startMoving;
 
-  CircleWidget({Key? key, required this.circle, required this.size, required this.onRotate, required this.onEndRotate}) : super(key: key);
+  CircleWidget({Key? key,required this.itemId, required this.circle, required this.size, required this.onRotate, required this.onEndRotate, required this.startMoving}) : super(key: key);
 
   @override
   _CircleWidgetState createState() => _CircleWidgetState();
 }
 
-class _CircleWidgetState extends State<CircleWidget> {
+class _CircleWidgetState extends State<CircleWidget>{
   double startAngle = 0.0;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: (){
-        BlocProvider.of<NavigationBloc>(context)
-            .add(NavigateToSpheresOfLifeScreenEvent());
+        widget.startMoving(widget.circle.id, widget.itemId);
       },
       onPanStart: (details) {
-        final centerX = (widget.size / 2)-10;
-        final centerY = widget.size / 2;
+        final centerX = widget.size/2-40;
+        final centerY = widget.size/2-40;
         startAngle = atan2(details.localPosition.dy - centerY, details.localPosition.dx - centerX);
       },
       onPanUpdate: (details) {
-        final centerX = (widget.size / 2)-10;
-        final centerY = widget.size / 2;
+        final centerX = widget.size/2-40;
+        final centerY = widget.size/2-40;
         final currentAngle = atan2(details.localPosition.dy - centerY, details.localPosition.dx - centerX);
         double difference = (currentAngle - startAngle + pi) % (2 * pi) - pi;
         final angleChange = difference < -pi ? difference + 2 * pi : difference;
@@ -47,32 +52,37 @@ class _CircleWidgetState extends State<CircleWidget> {
         widget.onEndRotate(details);
       },
       child: Container(
-        width: 40.0,
-        height: 40.0,
+        width: widget.circle.radius.toDouble(),
+        height: widget.circle.radius.toDouble(),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: widget.circle.color,
         ),
-        child: Text(
-          widget.circle.text,
-          style: const TextStyle(color: Colors.white),
-          textAlign: TextAlign.center,
+        child: Center( // Используйте Center, чтобы разместить текст по центру
+          child: AutoSizeText(
+            widget.circle.text,
+            maxLines: 1,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+            textAlign: TextAlign.center,
+          )
         ),
       ),
     );
   }
 }
 class CircularDraggableCircles extends StatefulWidget {
-  final List<Circle> circles;
-  final double size;
+  List<Circle> circles;
+  List<MainCircle> centralCircles;
+  double size;
+  Pair center;
 
-  const CircularDraggableCircles({super.key, required this.circles, required this.size});
+  CircularDraggableCircles({super.key, required this.circles, required this.centralCircles, required this.size, required this.center});
 
   @override
   _CircularDraggableCirclesState createState() => _CircularDraggableCirclesState();
 }
 
-class _CircularDraggableCirclesState extends State<CircularDraggableCircles> with SingleTickerProviderStateMixin{
+class _CircularDraggableCirclesState extends State<CircularDraggableCircles> with TickerProviderStateMixin {
   List<Offset> circlePositions = [];
   List<double> circleRotations = [];
 
@@ -80,16 +90,44 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
   double inertia = 0.0;
   late AnimationController ctrl;
 
+  double widgetTop = 0.0;
+  double widgetLeft = 0.0;
+  double alphaAnimValue = 1.0;
+  late Animation<double> AlphaAnimation;
+  late Animation<double> ReverceAlphaAnimation;
+  late AnimationController movingController;
+  late AnimationController afterMovingController;
+  bool animationDirectionForward = true;
+  //late Size screenSize;
+
+  Size getScreenSize(BuildContext context) {
+    final mediaQueryData = MediaQuery.of(context);
+    return mediaQueryData.size;
+  }
+
   @override
   void initState() {
     super.initState();
     ctrl = AnimationController.unbounded(vsync: this);
+    movingController = AnimationController.unbounded(vsync: this);
+    afterMovingController = AnimationController.unbounded(vsync: this);
     for (int i = 0; i < widget.circles.length; i++) {
-      final x = ((widget.size/2)-10) + (widget.size-2*widget.circles.first.radius)/2 * cos(2 * pi * i / widget.circles.length);
-      final y = (widget.size/2-10) + (widget.size-2*widget.circles.first.radius)/2 * sin(2 * pi * i / widget.circles.length);
+      final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
+      final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
       circlePositions.add(Offset(x, y));
       circleRotations.add(2 * pi * i / widget.circles.length);
     }
+    //screenSize = getScreenSize(this as BuildContext);
+    movingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000), // Длительность анимации
+    );
+    afterMovingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700), // Длительность анимации
+    );
+    AlphaAnimation = Tween(begin: 1.0, end: 0.0).animate(movingController);
+    ReverceAlphaAnimation = Tween(begin: 0.0, end: 1.0).animate(afterMovingController);
   }
   @override
   void dispose() {
@@ -108,15 +146,19 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        width: widget.size,
-        height: widget.size,
+    for (int i = 0; i<widget.centralCircles.length; i++) {
+      if(widget.centralCircles[i].coords.key==0.0||widget.centralCircles[i].coords.value==0.0) {
+        widget.centralCircles[i].coords = Pair(key: widget.center.key-widget.centralCircles[i].radius, value: widget.center.value-widget.centralCircles[i].radius);
+      }
+    }
+
+    return Container(
         child: AnimatedBuilder(
           animation: ctrl,
           builder: (context, child){
             final newRotation = ctrl.value - lastRotation;
             lastRotation = ctrl.value;
-            if(ctrl.isAnimating) _updateCircleRotation(newRotation, widget.size, (widget.size-2*widget.circles.first.radius)/2, isAnim: true);
+            if(ctrl.isAnimating) _updateCircleRotation(newRotation, widget.size, widget.center, (widget.size-widget.circles.first.radius)/2, isAnim: true);
             return Stack(
               children: [
                 ...widget.circles.asMap().entries.map((entry) {
@@ -126,43 +168,177 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
                   return Positioned(
                     left: circlePositions[index].dx,
                     top: circlePositions[index].dy,
-                    child: CircleWidget(
-                      circle: circle,
-                      size: widget.size,
-                      onRotate: (angle) {
-                        _updateCircleRotation(angle, widget.size, (widget.size-2*widget.circles.first.radius)/2);
+                    child: AnimatedBuilder(
+                      animation: AlphaAnimation,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: alphaAnimValue,
+                          child: CircleWidget(
+                            itemId: index,
+                            circle: circle,
+                            size: widget.size,
+                            onRotate: (angle) {
+                              _updateCircleRotation(angle, widget.size, widget.center, (widget.size-widget.circles.first.radius)/2);
+                            },
+                            onEndRotate: (details){
+                              startInertia(details.velocity.pixelsPerSecond.dx);
+                            },
+                            startMoving: (id, itemId){
+                              animationDirectionForward = true;
+                              final initialTop = widget.centralCircles.last.coords.value;
+                              final initialLeft = widget.centralCircles.last.coords.key;
+                              final finalTop = -50.0;
+                              final finalRight = widget.center.key*2-100;
+
+                              final radiusToCenterInitialTop = circlePositions[itemId].dy;
+                              final radiusToCenterInitialLeft = circlePositions[itemId].dx;
+                              final radiusToCenterFinalTop = widget.center.value-40;
+                              final radiusToCenterFinalLeft = widget.center.key-40;
+                              //duplicate clicked sphere
+                              widget.centralCircles.add(MainCircle(id: id, coords: Pair(key:circlePositions[itemId].dx, value: circlePositions[itemId].dy), text: widget.circles[itemId].text, textSize: 12, color: widget.circles[itemId].color, radius: widget.circles[itemId].radius/2));
+
+                              // Создаем анимацию перемещения виджета
+                              final Vanimation = Tween(begin: initialTop, end: finalTop).animate(
+                                CurvedAnimation(
+                                  parent: movingController, // controller - это объект AnimationController
+                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
+                                ),
+                              );
+                              final Hanimation = Tween(begin: initialLeft, end: finalRight).animate(
+                                CurvedAnimation(
+                                  parent: movingController, // controller - это объект AnimationController
+                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
+                                ),
+                              );
+                              final radiusToCenterVanimation = Tween(begin: radiusToCenterInitialTop, end: radiusToCenterFinalTop).animate(
+                                CurvedAnimation(
+                                  parent: movingController, // controller - это объект AnimationController
+                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
+                                ),
+                              );
+                              final radiusToCenterHanimation = Tween(begin: radiusToCenterInitialLeft, end: radiusToCenterFinalLeft).animate(
+                                CurvedAnimation(
+                                  parent: movingController, // controller - это объект AnimationController
+                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
+                                ),
+                              );
+                              // Добавляем слушателя анимации для обновления состояния и перерисовки виджета
+                              Vanimation.addListener(() {
+                                setState(() {
+                                  widget.centralCircles[widget.centralCircles.length-2].coords.value = Vanimation.value;
+                                });
+                              });
+                              Hanimation.addListener(() {
+                                setState(() {
+                                  widget.centralCircles[widget.centralCircles.length-2].coords.key = Hanimation.value;
+                                });
+                              });
+                              radiusToCenterVanimation.addListener(() {
+                                setState(() {
+                                  widget.centralCircles[widget.centralCircles.length-1].coords.value = radiusToCenterVanimation.value;
+                                });
+                              });
+                              radiusToCenterHanimation.addListener(() {
+                                setState(() {
+                                  widget.centralCircles[widget.centralCircles.length-1].coords.key = radiusToCenterHanimation.value;
+                                });
+                              });
+                              AlphaAnimation.addListener(() {
+                                setState(() {
+                                  alphaAnimValue = AlphaAnimation.value;
+                                });
+                              });
+                              ReverceAlphaAnimation.addListener(() {
+                                setState(() {
+                                  alphaAnimValue = ReverceAlphaAnimation.value;                                });
+                              });
+
+                              // Запускаем анимацию
+                              movingController.reset(); // Сбрасываем анимацию
+                              movingController.forward(); // Запускаем анимаци
+                              movingController.addStatusListener((status) {
+                                if (status == AnimationStatus.completed) {
+                                  if(animationDirectionForward){
+                                    widget.circles = Repository.getChildrenSpheres(2);
+                                    circlePositions.clear();
+                                    circleRotations.clear();
+                                    for (int i = 0; i < widget.circles.length; i++) {
+                                      final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
+                                      final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
+                                      circlePositions.add(Offset(x, y));
+                                      circleRotations.add(2 * pi * i / widget.circles.length);
+                                    }
+                                    afterMovingController.reset();
+                                    afterMovingController.forward();
+                                }else{
+                                    widget.centralCircles.removeLast();
+                                  }
+                                }
+                              });
+                            },
+                          ),
+                        );
                       },
-                      onEndRotate: (details){
-                        startInertia(details.velocity.pixelsPerSecond.dx);
-                      },
-                    ),
+                    )
                   );
                 }).toList(),
-                Positioned(
-                  left: widget.size/2-30,
-                  top: widget.size/2-30,
-                  child: Container(
-                      width: 60.0,
-                      height: 60.0,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black87,
+                ...widget.centralCircles.asMap().entries.map((entry){
+                  final index = entry.key;
+                  final value = entry.value;
+                  return Positioned(
+                    left: value.coords.key,
+                    top: value.coords.value,
+                    child: GestureDetector(
+                      child: Container(
+                          width: value.radius*2,
+                          height: value.radius*2,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: value.color,
+                          ),
+                          child: Center(
+                              child: IntrinsicHeight(
+                                child: Column(children: [
+                                  const SizedBox(height: 5,),
+                                  Text(
+                                    value.text,
+                                    style: TextStyle(color: Colors.white, fontSize: (value.textSize).toDouble()),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  AnimatedBuilder(
+                                    animation: AlphaAnimation,
+                                    builder: (context, child) {
+                                      return Opacity(
+                                        opacity: AlphaAnimation.value,
+                                        child: const Text(
+                                          "состояние",
+                                          style: TextStyle(color: Colors.white, fontSize: 10),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                ],),
+                              )
+                          )
                       ),
-                      child: const Column(children: [
-                        SizedBox(height: 10,),
-                        Text(
-                          "Я",
-                          style: TextStyle(color: Colors.white),
-                          textAlign: TextAlign.center,
-                        ),
-                        Text(
-                          "состояние",
-                          style: TextStyle(color: Colors.white, fontSize: 10),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],)
-                  ),
-                ),
+                      onTap: (){
+                        animationDirectionForward= false;
+                        afterMovingController.reverse();
+                        widget.circles = Repository.getChildrenSpheres(0);
+                        circleRotations.clear();
+                        circlePositions.clear();
+                        for (int i = 0; i < widget.circles.length; i++) {
+                          final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
+                          final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
+                          circlePositions.add(Offset(x, y));
+                          circleRotations.add(2 * pi * i / widget.circles.length);
+                        }
+                        movingController.reverse();
+                      },
+                    )
+                  );
+                }).toList()
               ],
             );
           },
@@ -170,9 +346,9 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
     );
   }
 
-  void _updateCircleRotation(double newRotation, double size, double radius, {bool isAnim = false}) {
-    final centerX = size / 2 - 10;
-    final centerY = size / 2 -10;
+  void _updateCircleRotation(double newRotation, double size, Pair center, double radius, {bool isAnim = false}) {
+    final centerX = widget.center.key-40;
+    final centerY = widget.center.value-40;
 
     for (int i = 0; i < widget.circles.length; i++) {
       final oldRotation = circleRotations[i];
@@ -192,6 +368,4 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
     // Вызываем setState, чтобы обновить виджет
     if(!isAnim)setState(() {});
   }
-
-
 }

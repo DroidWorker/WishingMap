@@ -22,6 +22,8 @@ class NavigateToWishesScreenEvent extends NavigationEvent {}
 
 class NavigateToAimsScreenEvent extends NavigationEvent {}
 
+class NavigateToProfileScreenEvent extends NavigationEvent {}
+
 abstract class NavigationState {}
 
 class NavigationAuthScreenState extends NavigationState {}
@@ -43,6 +45,8 @@ class NavigationTasksScreenState extends NavigationState {}
 class NavigationWishesScreenState extends NavigationState {}
 
 class NavigationAimsScreenState extends NavigationState {}
+
+class NavigationProfileScreenState extends NavigationState {}
 
 class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
   NavigationBloc() : super(NavigationCardsScreenState());
@@ -69,6 +73,8 @@ class NavigationBloc extends Bloc<NavigationEvent, NavigationState> {
       yield NavigationWishesScreenState();
     } else if (event is NavigateToAimsScreenEvent) {
       yield NavigationAimsScreenState();
+    } else if (event is NavigateToProfileScreenEvent) {
+      yield NavigationProfileScreenState();
     }
   }
 }

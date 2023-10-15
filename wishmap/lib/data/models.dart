@@ -6,7 +6,26 @@ class Circle {
   final Color color;
   final int radius;
 
-  Circle({required this.id, required this.text, required this.color, this.radius=40});
+  Circle({required this.id, required this.text, required this.color, this.radius=80});
+}
+
+class MainCircle {
+  final int id;
+  Pair coords;
+  final String text;
+  int textSize = 24;
+  final Color color;
+  final double radius;
+  bool isVisible;
+
+  MainCircle({required this.id, required this.coords, required this.text, this.textSize = 24, required this.color, this.radius=80, this.isVisible = true});
+}
+
+class Pair{
+  double key;
+  double value;
+
+  Pair({required this.key, required this.value});
 }
 
 class MoonItem {
@@ -40,6 +59,16 @@ class AimItem {
   final bool isChecked;
 
   AimItem({required this.id, required this.text, required this.isChecked});
+}
+
+class ProfileItem {
+  final int id;
+  final String name;
+  final String surname;
+  final String email;
+  final Color bgcolor;
+
+  ProfileItem({required this.id, required this.name, required this.surname, required this.email, required this.bgcolor});
 }
 
 class MyTreeNode {

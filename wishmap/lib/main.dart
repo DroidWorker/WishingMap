@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:wishmap/data/models.dart';
 import 'package:wishmap/home/aim_create.dart';
 import 'package:wishmap/home/aimedit_screen.dart';
 import 'package:wishmap/home/cards_screen.dart';
 import 'package:wishmap/home/mytasks_screen.dart';
 import 'package:wishmap/home/wish_screen.dart';
+import 'package:wishmap/provider/provider.dart';
 import 'home/myaims_screen.dart';
 import 'home/mywishesScreen.dart';
+import 'home/profile_screen.dart';
 import 'home/spheresoflife_screen.dart';
 import 'navigation/navigation_block.dart';
 import 'home/main_screen.dart';
@@ -49,6 +52,8 @@ class MyApp extends StatelessWidget {
             return WishesScreen(wishesList: [WishItem(id: 0, text: "text1", isChecked: false), WishItem(id: 1, text: "text2", isChecked: false), WishItem(id: 2, text: "text3", isChecked: true)]);
           } else if (state is NavigationAimsScreenState) {
             return AimsScreen(aimsList: [AimItem(id: 0, text: "text1", isChecked: false), AimItem(id: 1, text: "text2", isChecked: false), AimItem(id: 2, text: "text3", isChecked: true)]);
+          } else if (state is NavigationProfileScreenState) {
+            return ProfileScreen(pi: ProfileItem(id: 0, name: "text1", surname: "subtext", email: "email", bgcolor: Colors.red));
           } else {
             return Container(); // По умолчанию или для других состояний.
           }
