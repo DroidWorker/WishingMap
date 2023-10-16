@@ -111,7 +111,7 @@ class MainScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.list_alt),
+                      icon: Image.asset('icons/checklist2665651.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)
@@ -119,7 +119,7 @@ class MainScreen extends StatelessWidget {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.access_time),
+                      icon: Image.asset('icons/goal6002764.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)
@@ -127,7 +127,7 @@ class MainScreen extends StatelessWidget {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.favorite_border),
+                      icon: Image.asset('icons/wheel2526426.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)
@@ -135,12 +135,12 @@ class MainScreen extends StatelessWidget {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.list_alt),
+                      icon: Image.asset('icons/notelove1648387.png'),
                       iconSize: 30,
                       onPressed: () {},
                     ),
                     IconButton(
-                      icon: const Icon(Icons.access_time),
+                      icon: Image.asset('icons/notepad2725914.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)

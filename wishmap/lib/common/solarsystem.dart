@@ -1,13 +1,9 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wishmap/data/models.dart';
 import 'dart:math';
 import 'package:flutter/physics.dart';
-import 'package:wishmap/provider/provider.dart';
-import 'dart:ui' as ui;
 
-import '../navigation/navigation_block.dart';
 import '../repository/Repository.dart';
 
 class CircleWidget extends StatefulWidget {
@@ -85,6 +81,8 @@ class CircularDraggableCircles extends StatefulWidget {
 class _CircularDraggableCirclesState extends State<CircularDraggableCircles> with TickerProviderStateMixin {
   List<Offset> circlePositions = [];
   List<double> circleRotations = [];
+  List<Offset> plusesPositions = [];
+  List<double> plusesRotations = [];
 
   double lastRotation = 0.0;
   double inertia = 0.0;
@@ -111,11 +109,16 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
     ctrl = AnimationController.unbounded(vsync: this);
     movingController = AnimationController.unbounded(vsync: this);
     afterMovingController = AnimationController.unbounded(vsync: this);
+    final angleBetween = 2*pi/widget.circles.length;
     for (int i = 0; i < widget.circles.length; i++) {
       final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
       final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
       circlePositions.add(Offset(x, y));
       circleRotations.add(2 * pi * i / widget.circles.length);
+      final px = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos((2 * pi * i / widget.circles.length)+angleBetween/2);
+      final py = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin((2 * pi * i / widget.circles.length)+angleBetween/2);
+      plusesPositions.add(Offset(px,py));
+      plusesRotations.add((2 * pi * i / widget.circles.length)+angleBetween/2);
     }
     //screenSize = getScreenSize(this as BuildContext);
     movingController = AnimationController(
@@ -128,6 +131,7 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
     );
     AlphaAnimation = Tween(begin: 1.0, end: 0.0).animate(movingController);
     ReverceAlphaAnimation = Tween(begin: 0.0, end: 1.0).animate(afterMovingController);
+    movingController.addStatusListener(animStatusListener);
   }
   @override
   void dispose() {
@@ -137,11 +141,155 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
   void startInertia(double velocity) {
     ctrl.animateWith(
       FrictionSimulation(
-        0.05, // Коэффициент трения (настройте по своему усмотрению)
+        0.1, // Коэффициент трения (настройте по своему усмотрению)
         ctrl.value,
         velocity / 100, // Скорость инерции (настройте по своему усмотрению)
       ),
     );
+  }
+
+  void initAnim(int id, int itemId){
+    final initialTop = animationDirectionForward?widget.center.value-widget.centralCircles.last.radius:-50.0;//widget.centralCircles.last.coords.value;
+    final initialLeft = animationDirectionForward?widget.center.key-widget.centralCircles.last.radius:widget.center.key * 2 - 100;//widget.centralCircles.last.coords.key;
+    final finalTop = animationDirectionForward?-50.0:widget.center.value-widget.centralCircles[widget.centralCircles.length-2].radius;
+    final finalRight = animationDirectionForward?widget.center.key * 2 - 100:widget.center.key-widget.centralCircles[widget.centralCircles.length-2].radius;
+
+    final radiusToCenterInitialTop = animationDirectionForward?circlePositions[itemId].dy:widget.center.value - 40;
+    final radiusToCenterInitialLeft = animationDirectionForward?circlePositions[itemId].dx:widget.center.key - 40;
+    final radiusToCenterFinalTop = animationDirectionForward?widget.center.value - 40:circlePositions[itemId].dy;
+    final radiusToCenterFinalLeft = animationDirectionForward?widget.center.key - 40:circlePositions[itemId].dx;
+    //duplicate clicked sphere
+    if(animationDirectionForward) {
+      widget.centralCircles.add(MainCircle(id: id,
+          coords: Pair(key: circlePositions[itemId].dx,
+              value: circlePositions[itemId].dy),
+          text: widget.circles[itemId].text,
+          textSize: 12,
+          color: widget.circles[itemId].color,
+          radius: widget.circles[itemId].radius / 2));
+      if (widget.centralCircles.length > 2) {
+        widget.centralCircles[widget.centralCircles
+            .length - 3].isVisible = false;
+      }
+      AlphaAnimation = Tween(begin: 1.0, end: 0.0).animate(movingController);
+      ReverceAlphaAnimation = Tween(begin: 0.0, end: 1.0).animate(afterMovingController);
+    }else{
+      AlphaAnimation = Tween(begin: 0.0, end: 1.0).animate(movingController);
+      ReverceAlphaAnimation = Tween(begin: 1.0, end: 0.0).animate(afterMovingController);
+    }
+
+    // Создаем анимацию перемещения виджета
+    final Vanimation = Tween(
+        begin: initialTop, end: finalTop).animate(
+      CurvedAnimation(
+        parent: movingController,
+        // controller - это объект AnimationController
+        curve: Curves
+            .easeInOut, // Вы можете выбрать другую кривую анимации
+      ),
+    );
+    final Hanimation = Tween(
+        begin: initialLeft, end: finalRight).animate(
+      CurvedAnimation(
+        parent: movingController,
+        // controller - это объект AnimationController
+        curve: Curves
+            .easeInOut, // Вы можете выбрать другую кривую анимации
+      ),
+    );
+    final radiusToCenterVanimation = Tween(
+        begin: radiusToCenterInitialTop,
+        end: radiusToCenterFinalTop).animate(
+      CurvedAnimation(
+        parent: movingController,
+        // controller - это объект AnimationController
+        curve: Curves
+            .easeInOut, // Вы можете выбрать другую кривую анимации
+      ),
+    );
+    final radiusToCenterHanimation = Tween(
+        begin: radiusToCenterInitialLeft,
+        end: radiusToCenterFinalLeft).animate(
+      CurvedAnimation(
+        parent: movingController,
+        // controller - это объект AnimationController
+        curve: Curves
+            .easeInOut, // Вы можете выбрать другую кривую анимации
+      ),
+    );
+    // Добавляем слушателя анимации для обновления состояния и перерисовки виджета
+    Vanimation.addListener(() {
+      setState(() {
+        widget.centralCircles[widget.centralCircles
+            .length - 2].coords.value =
+            Vanimation.value;
+      });
+    });
+    Hanimation.addListener(() {
+      setState(() {
+        widget.centralCircles[widget.centralCircles
+            .length - 2].coords.key =
+            Hanimation.value;
+      });
+    });
+    radiusToCenterVanimation.addListener(() {
+      setState(() {
+        widget.centralCircles[widget.centralCircles
+            .length - 1].coords.value =
+            radiusToCenterVanimation.value;
+      });
+    });
+    radiusToCenterHanimation.addListener(() {
+      setState(() {
+        widget.centralCircles[widget.centralCircles
+            .length - 1].coords.key =
+            radiusToCenterHanimation.value;
+      });
+    });
+    AlphaAnimation.addListener(() {
+      setState(() {
+        alphaAnimValue = AlphaAnimation.value;
+      });
+    });
+    ReverceAlphaAnimation.addListener(() {
+      setState(() {
+        alphaAnimValue = ReverceAlphaAnimation.value;
+      });
+    });
+  }
+
+  void animStatusListener(status){
+    if (status == AnimationStatus.completed) {
+      if(animationDirectionForward){
+        widget.circles = Repository.getChildrenSpheres(2);
+        circlePositions.clear();
+        circleRotations.clear();
+        plusesPositions.clear();
+        plusesRotations.clear();
+        final angleBetween = 2*pi/widget.circles.length;
+        for (int i = 0; i < widget.circles.length; i++) {
+          final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
+          final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
+          circlePositions.add(Offset(x, y));
+          circleRotations.add(2 * pi * i / widget.circles.length);
+          final px = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos((2 * pi * i / widget.circles.length)+angleBetween/2);
+          final py = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin((2 * pi * i / widget.circles.length)+angleBetween/2);
+          plusesPositions.add(Offset(px,py));
+          plusesRotations.add((2 * pi * i / widget.circles.length)+angleBetween/2);
+        }
+        afterMovingController.reset();
+        afterMovingController.forward();
+      }else{{
+        if(widget.centralCircles.length>2){
+          widget.centralCircles[widget.centralCircles.length-3].isVisible = true;
+        }
+        setState(() {
+          print("before rem ${widget.centralCircles.length}");
+          widget.centralCircles.removeLast();
+          print("after rem ${widget.centralCircles.length}");
+        });
+      }}
+    }
   }
 
   @override
@@ -161,6 +309,38 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
             if(ctrl.isAnimating) _updateCircleRotation(newRotation, widget.size, widget.center, (widget.size-widget.circles.first.radius)/2, isAnim: true);
             return Stack(
               children: [
+                Positioned(
+                  left: widget.center.key+40-widget.size/2,
+                  top: widget.center.value+40-widget.size/2,
+                  child:
+                  Container(
+                    width: widget.size-80, // Ширина контейнера
+                    height: widget.size-80, // Высота контейнера
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.transparent,
+                        border: Border.all(color:  Colors.grey, width: 2)
+                    ),
+                    child: const SizedBox(),
+                  ),),
+                ...circlePositions.asMap().entries.map((e) {
+                  return Positioned(
+                    left: plusesPositions[e.key].dx+35,
+                    top: plusesPositions[e.key].dy+35,
+                    child:
+                      Container(
+                        width: 10, // Ширина контейнера
+                        height: 10, // Высота контейнера
+                        decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey,
+                        ),
+                        child: const Center(
+                          child: Text("+", style: TextStyle(fontSize: 10, color: Colors.white),),
+                        ),
+                      ));
+                }
+                ),
                 ...widget.circles.asMap().entries.map((entry) {
                   final index = entry.key;
                   final circle = entry.value;
@@ -183,106 +363,22 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
                             onEndRotate: (details){
                               startInertia(details.velocity.pixelsPerSecond.dx);
                             },
-                            startMoving: (id, itemId){
+                            startMoving: (id, itemId) {
                               animationDirectionForward = true;
-                              final initialTop = widget.centralCircles.last.coords.value;
-                              final initialLeft = widget.centralCircles.last.coords.key;
-                              final finalTop = -50.0;
-                              final finalRight = widget.center.key*2-100;
-
-                              final radiusToCenterInitialTop = circlePositions[itemId].dy;
-                              final radiusToCenterInitialLeft = circlePositions[itemId].dx;
-                              final radiusToCenterFinalTop = widget.center.value-40;
-                              final radiusToCenterFinalLeft = widget.center.key-40;
-                              //duplicate clicked sphere
-                              widget.centralCircles.add(MainCircle(id: id, coords: Pair(key:circlePositions[itemId].dx, value: circlePositions[itemId].dy), text: widget.circles[itemId].text, textSize: 12, color: widget.circles[itemId].color, radius: widget.circles[itemId].radius/2));
-
-                              // Создаем анимацию перемещения виджета
-                              final Vanimation = Tween(begin: initialTop, end: finalTop).animate(
-                                CurvedAnimation(
-                                  parent: movingController, // controller - это объект AnimationController
-                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
-                                ),
-                              );
-                              final Hanimation = Tween(begin: initialLeft, end: finalRight).animate(
-                                CurvedAnimation(
-                                  parent: movingController, // controller - это объект AnimationController
-                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
-                                ),
-                              );
-                              final radiusToCenterVanimation = Tween(begin: radiusToCenterInitialTop, end: radiusToCenterFinalTop).animate(
-                                CurvedAnimation(
-                                  parent: movingController, // controller - это объект AnimationController
-                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
-                                ),
-                              );
-                              final radiusToCenterHanimation = Tween(begin: radiusToCenterInitialLeft, end: radiusToCenterFinalLeft).animate(
-                                CurvedAnimation(
-                                  parent: movingController, // controller - это объект AnimationController
-                                  curve: Curves.easeInOut, // Вы можете выбрать другую кривую анимации
-                                ),
-                              );
-                              // Добавляем слушателя анимации для обновления состояния и перерисовки виджета
-                              Vanimation.addListener(() {
-                                setState(() {
-                                  widget.centralCircles[widget.centralCircles.length-2].coords.value = Vanimation.value;
-                                });
-                              });
-                              Hanimation.addListener(() {
-                                setState(() {
-                                  widget.centralCircles[widget.centralCircles.length-2].coords.key = Hanimation.value;
-                                });
-                              });
-                              radiusToCenterVanimation.addListener(() {
-                                setState(() {
-                                  widget.centralCircles[widget.centralCircles.length-1].coords.value = radiusToCenterVanimation.value;
-                                });
-                              });
-                              radiusToCenterHanimation.addListener(() {
-                                setState(() {
-                                  widget.centralCircles[widget.centralCircles.length-1].coords.key = radiusToCenterHanimation.value;
-                                });
-                              });
-                              AlphaAnimation.addListener(() {
-                                setState(() {
-                                  alphaAnimValue = AlphaAnimation.value;
-                                });
-                              });
-                              ReverceAlphaAnimation.addListener(() {
-                                setState(() {
-                                  alphaAnimValue = ReverceAlphaAnimation.value;                                });
-                              });
-
+                              initAnim(id, itemId);
                               // Запускаем анимацию
                               movingController.reset(); // Сбрасываем анимацию
                               movingController.forward(); // Запускаем анимаци
-                              movingController.addStatusListener((status) {
-                                if (status == AnimationStatus.completed) {
-                                  if(animationDirectionForward){
-                                    widget.circles = Repository.getChildrenSpheres(2);
-                                    circlePositions.clear();
-                                    circleRotations.clear();
-                                    for (int i = 0; i < widget.circles.length; i++) {
-                                      final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
-                                      final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
-                                      circlePositions.add(Offset(x, y));
-                                      circleRotations.add(2 * pi * i / widget.circles.length);
-                                    }
-                                    afterMovingController.reset();
-                                    afterMovingController.forward();
-                                }else{
-                                    widget.centralCircles.removeLast();
-                                  }
-                                }
-                              });
-                            },
-                          ),
+
+                            })
                         );
                       },
                     )
                   );
                 }).toList(),
-                ...widget.centralCircles.asMap().entries.map((entry){
+                ...widget.centralCircles.asMap().entries.where((entry) {
+                  return entry.value.isVisible; // Фильтруем элементы по условию isVisible
+                }).map((entry){
                   final index = entry.key;
                   final value = entry.value;
                   return Positioned(
@@ -324,17 +420,26 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
                       ),
                       onTap: (){
                         animationDirectionForward= false;
-                        afterMovingController.reverse();
-                        widget.circles = Repository.getChildrenSpheres(0);
+                        //afterMovingController.reverse();
+                        widget.circles = Repository.getChildrenSpheres(value.id);
                         circleRotations.clear();
                         circlePositions.clear();
+                        plusesPositions.clear();
+                        plusesRotations.clear();
+                        final angleBetween = 2*pi/widget.circles.length;
                         for (int i = 0; i < widget.circles.length; i++) {
                           final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
                           final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
                           circlePositions.add(Offset(x, y));
                           circleRotations.add(2 * pi * i / widget.circles.length);
+                          final px = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos((2 * pi * i / widget.circles.length)+angleBetween/2);
+                          final py = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin((2 * pi * i / widget.circles.length)+angleBetween/2);
+                          plusesPositions.add(Offset(px,py));
+                          plusesRotations.add((2 * pi * i / widget.circles.length)+angleBetween/2);
                         }
-                        movingController.reverse();
+                        initAnim(widget.centralCircles.last.id, widget.circles.indexWhere((element) => element.id==widget.centralCircles.last.id));
+                        movingController.reset();
+                        movingController.forward();
                       },
                     )
                   );
@@ -352,17 +457,23 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
 
     for (int i = 0; i < widget.circles.length; i++) {
       final oldRotation = circleRotations[i];
+      final oldPlusRotation = plusesRotations[i];
 
       // Вычисляем новый угол поворота, учитывая старый угол и новый угол
       final newRotationInRadians = (oldRotation + newRotation);
+      final newPlusRotationInRadians = (oldPlusRotation + newRotation);
 
       // Вычисляем новые координаты на основе нового угла поворота, радиуса и центральных координат
       final newX = centerX + radius * cos(newRotationInRadians);
       final newY = centerY + radius * sin(newRotationInRadians);
+      final newPlusX = centerX + radius * cos(newPlusRotationInRadians);
+      final newPlusY = centerY + radius * sin(newPlusRotationInRadians);
 
       // Обновляем позицию каждой окружности и угол поворота
       circlePositions[i] = Offset(newX, newY);
       circleRotations[i] = oldRotation+newRotation;
+      plusesPositions[i] = Offset(newPlusX, newPlusY);
+      plusesRotations[i] = oldPlusRotation+newRotation;
     }
 
     // Вызываем setState, чтобы обновить виджет
