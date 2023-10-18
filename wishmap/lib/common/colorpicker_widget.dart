@@ -65,7 +65,9 @@ class _ColorPickerWidgetState extends State<ColorPickerWidget> {
                         onTap: () {
                           // Обработка нажатия на квадратик
                           final selectedColor = colors[index];
-                          print('Выбран цвет: $selectedColor');
+                          setState(() {
+                            onChanged(HSVColor.fromColor(colors[index]));
+                          });
                         },
                         child: Container(
                           margin: const EdgeInsets.all(1),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../common/colorpicker_widget.dart';
+import '../navigation/navigation_block.dart';
 import '../res/colors.dart';
 
 class WishScreen extends StatelessWidget {
@@ -11,7 +13,7 @@ class WishScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: SingleChildScrollView(
+      body: SafeArea(child:SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: Column(
@@ -20,15 +22,18 @@ class WishScreen extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.home_outlined),
                   iconSize: 30,
-                  onPressed: () {},
+                  onPressed: () {
+                    BlocProvider.of<NavigationBloc>(context)
+                        .add(NavigateToMainScreenEvent());
+                  },
                 ),
                 const Expanded(child: SizedBox(),),
                 GestureDetector(
-                  child: const Text("Cохранить  "),
+                  child: const Text("Cохранить  ", style: TextStyle(color: AppColors.pinkTextColor)),
                   onTap: (){},
                 ),
                 GestureDetector(
-                  child: const Text("Удалить"),
+                  child: const Text("Удалить", style: TextStyle(color: AppColors.greytextColor),),
                   onTap: (){},
                 )
               ],),
@@ -43,6 +48,7 @@ class WishScreen extends StatelessWidget {
               TextField(
                 style: const TextStyle(color: Colors.black), // Черный текст ввода
                 decoration: InputDecoration(
+                  border: InputBorder.none,
                   filled: true, // Заливка фона
                   fillColor: AppColors.fieldFillColor, // Серый фон с полупрозрачностью
                   hintText: 'Запиши желание', // Базовый текст
@@ -55,6 +61,7 @@ class WishScreen extends StatelessWidget {
                 maxLines: 15,
                 style: const TextStyle(color: Colors.black), // Черный текст ввода
                 decoration: InputDecoration(
+                  border: InputBorder.none,
                   filled: true, // Заливка фона
                   fillColor: AppColors.fieldFillColor, // Серый фон с полупрозрачностью
                   hintText: 'Опиши подробно свое желание', // Базовый текст
@@ -64,14 +71,16 @@ class WishScreen extends StatelessWidget {
               const SizedBox(height: 10),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  double leftWidth = constraints.maxWidth * 4 /7;
-                  double rightWidth = constraints.maxWidth - leftWidth;
+                  double leftWidth = (constraints.maxWidth * 4 /7)-2;
+                  double rightWidth = constraints.maxWidth - leftWidth - 2;
                   return Row(
                     children: [
-                      Container(width: leftWidth, height: leftWidth, color: Colors.red),
+                      Container(width: leftWidth, height: leftWidth, color: AppColors.fieldFillColor),
+                      const SizedBox(width: 2),
                       Column(children: [
-                        Container(width: rightWidth, height: leftWidth/2, color: Colors.green),
-                        Container(width: rightWidth, height: leftWidth/2, color: Colors.blue),
+                        Container(width: rightWidth, height: leftWidth/2-2, color: AppColors.fieldFillColor),
+                        const SizedBox(height: 2),
+                        Container(width: rightWidth, height: leftWidth/2-1, color: AppColors.fieldFillColor),
                       ],)
                     ],
                   );
@@ -86,12 +95,13 @@ class WishScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: (){},
-                  child: const Text("Добавить")
+                  child: const Text("Добавить", style: TextStyle(color: AppColors.greytextColor),)
               ),
               const SizedBox(height: 10),
               TextField(
                 style: const TextStyle(color: Colors.black), // Черный текст ввода
                 decoration: InputDecoration(
+                  border: InputBorder.none,
                   filled: true, // Заливка фона
                   fillColor: AppColors.fieldFillColor, // Серый фон с полупрозрачностью
                   hintText: 'Напиши аффирмацию', // Базовый текст
@@ -144,14 +154,17 @@ class WishScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10), // <-- Radius
                         ),
                       ),
-                      onPressed: (){},
-                      child: const Text("Добавить")
+                      onPressed: (){
+                        BlocProvider.of<NavigationBloc>(context)
+                            .add(NavigateToAimCreateScreenEvent());
+                      },
+                      child: const Text("Добавить", style: TextStyle(color: AppColors.greytextColor))
                   )
                 ],),
               )
             ],
           ),),
-      )
+      ))
     );
   }
 }

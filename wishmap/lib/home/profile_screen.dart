@@ -35,20 +35,20 @@ class _ProfileScreenState extends State<ProfileScreen>{
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        body: Padding(
+        body: SafeArea(child:Padding(
           padding: const EdgeInsets.all(15),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                child: const Text("<Назад"),
+                child: const Text("<Назад", style: TextStyle(color: AppColors.greytextColor),),
                 onTap: (){
                   BlocProvider.of<NavigationBloc>(context)
                       .add(NavigateToMainScreenEvent());
                 },
               ),
               Padding(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.fromLTRB(5, 15, 5, 15),
                 child: Row(children: [
                   Container(
                     width: 50,
@@ -59,8 +59,8 @@ class _ProfileScreenState extends State<ProfileScreen>{
                       boxShadow: [
                         BoxShadow(
                           color: pi.bgcolor,
-                          blurRadius: 3, // Adjust the glow effect as needed
-                          spreadRadius: 3,
+                          blurRadius: 2, // Adjust the glow effect as needed
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
@@ -74,8 +74,9 @@ class _ProfileScreenState extends State<ProfileScreen>{
                       ),
                     ),
                   ),
-                  const SizedBox(width: 5,),
+                  const SizedBox(width: 10),
                   const Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                     Text("name"),
@@ -86,11 +87,12 @@ class _ProfileScreenState extends State<ProfileScreen>{
               ),
               const Divider(
                 height: 3,
-                color: Colors.black,
+                color: AppColors.dividerGreyColor,
                 indent: 5,
                 endIndent: 5,
               ),
-              const Text("Еще", style: TextStyle(fontSize: 10)),
+              const SizedBox(height: 5),
+              const Text("Еще", style: TextStyle(fontSize: 10, color: AppColors.greytextColor)),
               const SizedBox(height: 5),
               GestureDetector(
                 child: const Text("Ваш уровень(баллы)"),
@@ -109,10 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen>{
                 onTap: (){},
               ),
               const SizedBox(height: 10),
-              const Text("Настройки", style: TextStyle(fontSize: 10))
+              const Text("Настройки", style: TextStyle(fontSize: 10, color: AppColors.greytextColor))
             ],
           ),
-        )
+        ))
     );
   }
 }

@@ -6,8 +6,6 @@ import 'package:wishmap/common/solarsystem.dart';
 import 'package:wishmap/res/colors.dart';
 import 'package:wishmap/data/models.dart';
 
-import '../provider/provider.dart';
-
 class MainScreen extends StatelessWidget {
   MainScreen({super.key});
   final GlobalKey columnKey = GlobalKey();
@@ -23,14 +21,14 @@ class MainScreen extends StatelessWidget {
   ];
 
   List<MainCircle> centralCircles = [
-    MainCircle(id: 0, coords: Pair(key: 0.0, value: 0.0), text: "я", color: Colors.black, radius: 80)
+    MainCircle(id: 0, coords: Pair(key: 0.0, value: 0.0), text: "я", textSize: 40, color: Colors.black, radius: 80)
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: Stack(
+      body: SafeArea(child:Stack(
         children: [
         Center(
           child: Column(
@@ -60,7 +58,7 @@ class MainScreen extends StatelessWidget {
                   Expanded(
                       flex: 6,
                       child:
-                      Text("data")
+                      Text("подсказка")
                   )
                 ],
               ),
@@ -111,7 +109,7 @@ class MainScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      icon: Image.asset('icons/checklist2665651.png'),
+                      icon: Image.asset('assets/icons/checklist2665651.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)
@@ -119,15 +117,7 @@ class MainScreen extends StatelessWidget {
                       },
                     ),
                     IconButton(
-                      icon: Image.asset('icons/goal6002764.png'),
-                      iconSize: 30,
-                      onPressed: () {
-                        BlocProvider.of<NavigationBloc>(context)
-                            .add(NavigateToWishesScreenEvent());
-                      },
-                    ),
-                    IconButton(
-                      icon: Image.asset('icons/wheel2526426.png'),
+                      icon: Image.asset('assets/icons/goal6002764.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)
@@ -135,12 +125,23 @@ class MainScreen extends StatelessWidget {
                       },
                     ),
                     IconButton(
-                      icon: Image.asset('icons/notelove1648387.png'),
+                      icon: Image.asset('assets/icons/wheel2526426.png'),
                       iconSize: 30,
-                      onPressed: () {},
+                      onPressed: () {
+                        BlocProvider.of<NavigationBloc>(context)
+                            .add(NavigateToAimsScreenEvent());
+                      },
                     ),
                     IconButton(
-                      icon: Image.asset('icons/notepad2725914.png'),
+                      icon: Image.asset('assets/icons/notelove1648387.png'),
+                      iconSize: 30,
+                      onPressed: () {
+                        BlocProvider.of<NavigationBloc>(context)
+                            .add(NavigateToWishesScreenEvent());
+                      },
+                    ),
+                    IconButton(
+                      icon: Image.asset('assets/icons/notepad2725914.png'),
                       iconSize: 30,
                       onPressed: () {
                         BlocProvider.of<NavigationBloc>(context)
@@ -153,7 +154,7 @@ class MainScreen extends StatelessWidget {
           ),
         ),
         CircularDraggableCircles(circles: circles, centralCircles: centralCircles, size: MediaQuery.of(context).size.height-350<MediaQuery.of(context).size.width-20? MediaQuery.of(context).size.height-350 : MediaQuery.of(context).size.width-20, center: Pair(key: MediaQuery.of(context).size.width/2, value: MediaQuery.of(context).size.height*0.50)),
-      ],)
+      ],))
     );
   }
 }

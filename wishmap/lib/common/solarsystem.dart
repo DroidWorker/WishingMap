@@ -1,20 +1,23 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wishmap/data/models.dart';
 import 'dart:math';
 import 'package:flutter/physics.dart';
 
+import '../navigation/navigation_block.dart';
 import '../repository/Repository.dart';
 
 class CircleWidget extends StatefulWidget {
   final itemId;
   final Circle circle;
   final double size;
+  final Pair center;
   final Function(double) onRotate;
   final Function(DragEndDetails) onEndRotate;
   final Function(int id, int itemId) startMoving;
 
-  CircleWidget({Key? key,required this.itemId, required this.circle, required this.size, required this.onRotate, required this.onEndRotate, required this.startMoving}) : super(key: key);
+  CircleWidget({Key? key,required this.itemId, required this.circle, required this.size, required this.center, required this.onRotate, required this.onEndRotate, required this.startMoving}) : super(key: key);
 
   @override
   _CircleWidgetState createState() => _CircleWidgetState();
@@ -30,14 +33,15 @@ class _CircleWidgetState extends State<CircleWidget>{
         widget.startMoving(widget.circle.id, widget.itemId);
       },
       onPanStart: (details) {
-        final centerX = widget.size/2-40;
-        final centerY = widget.size/2-40;
-        startAngle = atan2(details.localPosition.dy - centerY, details.localPosition.dx - centerX);
+        final centerX = widget.center.key;
+        final centerY = widget.center.value;
+        startAngle = atan2(details.globalPosition.dy - centerY, details.globalPosition.dx - centerX);
       },
       onPanUpdate: (details) {
-        final centerX = widget.size/2-40;
-        final centerY = widget.size/2-40;
-        final currentAngle = atan2(details.localPosition.dy - centerY, details.localPosition.dx - centerX);
+        final centerX = widget.center.key;
+        final centerY = widget.center.value;
+        final currentAngle = atan2(details.globalPosition.dy - centerY, details.globalPosition.dx - centerX);
+
         double difference = (currentAngle - startAngle + pi) % (2 * pi) - pi;
         final angleChange = difference < -pi ? difference + 2 * pi : difference;
 
@@ -85,6 +89,7 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
   List<double> plusesRotations = [];
 
   double lastRotation = 0.0;
+  double lastdirection = 0.0;
   double inertia = 0.0;
   late AnimationController ctrl;
 
@@ -141,9 +146,9 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
   void startInertia(double velocity) {
     ctrl.animateWith(
       FrictionSimulation(
-        0.1, // Коэффициент трения (настройте по своему усмотрению)
+        0.03, // Коэффициент трения (настройте по своему усмотрению)
         ctrl.value,
-        velocity / 100, // Скорость инерции (настройте по своему усмотрению)
+        velocity / 80, // Скорость инерции (настройте по своему усмотрению)
       ),
     );
   }
@@ -284,9 +289,7 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
           widget.centralCircles[widget.centralCircles.length-3].isVisible = true;
         }
         setState(() {
-          print("before rem ${widget.centralCircles.length}");
           widget.centralCircles.removeLast();
-          print("after rem ${widget.centralCircles.length}");
         });
       }}
     }
@@ -304,7 +307,7 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
         child: AnimatedBuilder(
           animation: ctrl,
           builder: (context, child){
-            final newRotation = ctrl.value - lastRotation;
+            final newRotation = ctrl.value- lastRotation;
             lastRotation = ctrl.value;
             if(ctrl.isAnimating) _updateCircleRotation(newRotation, widget.size, widget.center, (widget.size-widget.circles.first.radius)/2, isAnim: true);
             return Stack(
@@ -357,11 +360,13 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
                             itemId: index,
                             circle: circle,
                             size: widget.size,
+                            center: widget.center,
                             onRotate: (angle) {
+                              lastdirection = angle;
                               _updateCircleRotation(angle, widget.size, widget.center, (widget.size-widget.circles.first.radius)/2);
                             },
                             onEndRotate: (details){
-                              startInertia(details.velocity.pixelsPerSecond.dx);
+                              startInertia(((details.velocity.pixelsPerSecond.dx+details.velocity.pixelsPerSecond.dy).abs()/2)*(lastdirection<0?(-1):1));
                             },
                             startMoving: (id, itemId) {
                               animationDirectionForward = true;
@@ -419,27 +424,34 @@ class _CircularDraggableCirclesState extends State<CircularDraggableCircles> wit
                           )
                       ),
                       onTap: (){
-                        animationDirectionForward= false;
-                        //afterMovingController.reverse();
-                        widget.circles = Repository.getChildrenSpheres(value.id);
-                        circleRotations.clear();
-                        circlePositions.clear();
-                        plusesPositions.clear();
-                        plusesRotations.clear();
-                        final angleBetween = 2*pi/widget.circles.length;
-                        for (int i = 0; i < widget.circles.length; i++) {
-                          final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
-                          final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
-                          circlePositions.add(Offset(x, y));
-                          circleRotations.add(2 * pi * i / widget.circles.length);
-                          final px = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos((2 * pi * i / widget.circles.length)+angleBetween/2);
-                          final py = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin((2 * pi * i / widget.circles.length)+angleBetween/2);
-                          plusesPositions.add(Offset(px,py));
-                          plusesRotations.add((2 * pi * i / widget.circles.length)+angleBetween/2);
+                        if(widget.centralCircles.length-1!=index){
+                          animationDirectionForward= false;
+                          widget.circles = Repository.getChildrenSpheres(value.id);
+                          circleRotations.clear();
+                          circlePositions.clear();
+                          plusesPositions.clear();
+                          plusesRotations.clear();
+                          final angleBetween = 2*pi/widget.circles.length;
+                          for (int i = 0; i < widget.circles.length; i++) {
+                            final x = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos(2 * pi * i / widget.circles.length);
+                            final y = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin(2 * pi * i / widget.circles.length);
+                            circlePositions.add(Offset(x, y));
+                            circleRotations.add(2 * pi * i / widget.circles.length);
+                            final px = widget.center.key-40 + (widget.size-widget.circles[i].radius)/2 * cos((2 * pi * i / widget.circles.length)+angleBetween/2);
+                            final py = widget.center.value-40 + (widget.size-widget.circles[i].radius)/2 * sin((2 * pi * i / widget.circles.length)+angleBetween/2);
+                            plusesPositions.add(Offset(px,py));
+                            plusesRotations.add((2 * pi * i / widget.circles.length)+angleBetween/2);
+                          }
+                          initAnim(widget.centralCircles.last.id, widget.circles.indexWhere((element) => element.id==widget.centralCircles.last.id));
+                          movingController.reset();
+                          movingController.forward();
+                        }else if(widget.centralCircles[index].id==0){
+                          BlocProvider.of<NavigationBloc>(context)
+                              .add(NavigateToSpheresOfLifeScreenEvent());
+                        }else{
+                          BlocProvider.of<NavigationBloc>(context)
+                              .add(NavigateToMainSphereEditScreenEvent());
                         }
-                        initAnim(widget.centralCircles.last.id, widget.circles.indexWhere((element) => element.id==widget.centralCircles.last.id));
-                        movingController.reset();
-                        movingController.forward();
                       },
                     )
                   );

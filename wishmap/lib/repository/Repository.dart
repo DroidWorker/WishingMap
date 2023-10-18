@@ -21,4 +21,20 @@ class Repository{
         return [Circle(id: 11, text: "child11", color: Colors.deepOrangeAccent), Circle(id: 12, text: "child12", color: Colors.orange), Circle(id: 13, text: "child13", color: Colors.purpleAccent)];
     }
   }
+  static getProfile(String? login, String? password){
+    if(login!=null&&password!=null){//get profile by auth screen
+
+      throw Exception("user not found #001");
+    }else{//get login from db
+
+      return ProfileItem(id: 0, name: "test_name", surname: "surname", email: "email@email.com", bgcolor: Colors.pinkAccent);
+    }
+  }
+  static registerProfile(String name, String surname, String login, String password){
+      return ProfileItem(id: 0, name: "test_name", surname: "surname", email: "email@email.com", bgcolor: Colors.pinkAccent);
+  }
+
+  static saveAim(){
+    return true;
+  }
 }

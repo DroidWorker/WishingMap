@@ -5,17 +5,25 @@ import '../data/models.dart';
 import '../navigation/navigation_block.dart';
 import '../res/colors.dart';
 
-class TasksScreen extends StatelessWidget {
+class TasksScreen extends StatefulWidget {
+  const TasksScreen({super.key, required this.taskList});
+  final List<TaskItem> taskList;
 
-  TasksScreen({super.key, required this.taskList});
+  @override
+  _TaskScreenState createState() => _TaskScreenState(this.taskList);
+}
+
+class _TaskScreenState extends State{
+  _TaskScreenState(this.taskList);
+
   List<TaskItem> taskList;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        body: Padding(
-            padding: EdgeInsets.all(15),
+        body: SafeArea(child:Padding(
+            padding: const EdgeInsets.all(15),
             child: Column(
               children: [
                 Row(children: [
@@ -35,7 +43,7 @@ class TasksScreen extends StatelessWidget {
                 ListView.builder(
                     itemCount: taskList.length,
                     itemBuilder: (context, index){
-                      return TaskItemWidget(ti: taskList[index]);
+                      return TaskItemWidget(ti: taskList[index], onClick: onItemClick, onDelete: onItemDelete);
                     }
                 ),),
                 const SizedBox(height: 10),
@@ -46,8 +54,11 @@ class TasksScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10), // <-- Radius
                       ),
                     ),
-                    onPressed: (){},
-                    child: const Text("Добавить")
+                    onPressed: (){
+                      BlocProvider.of<NavigationBloc>(context)
+                          .add(NavigateToMainScreenEvent());
+                    },
+                    child: const Text("Добавить",style: TextStyle(color: AppColors.greytextColor),)
                 ),
                 const SizedBox(height: 20),
                 const Divider(
@@ -63,44 +74,57 @@ class TasksScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.list_alt),
+                        icon: Image.asset('assets/icons/checklist2665651.png'),
                         iconSize: 30,
                         onPressed: () {
-                          BlocProvider.of<NavigationBloc>(context)
-                              .add(NavigateToWishScreenEvent());
+
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.access_time),
+                        icon: Image.asset('assets/icons/goal6002764.png'),
                         iconSize: 30,
                         onPressed: () {
                           BlocProvider.of<NavigationBloc>(context)
-                              .add(NavigateToAimCreateScreenEvent());
+                              .add(NavigateToWishesScreenEvent());
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.favorite_border),
+                        icon: Image.asset('assets/icons/wheel2526426.png'),
                         iconSize: 30,
                         onPressed: () {
                           BlocProvider.of<NavigationBloc>(context)
-                              .add(NavigateToAimEditScreenEvent());
+                              .add(NavigateToAimsScreenEvent());
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.list_alt),
+                        icon: Image.asset('assets/icons/notelove1648387.png'),
                         iconSize: 30,
                         onPressed: () {},
                       ),
                       IconButton(
-                        icon: const Icon(Icons.access_time),
+                        icon: Image.asset('assets/icons/notepad2725914.png'),
                         iconSize: 30,
-                        onPressed: () {},
+                        onPressed: () {
+                          BlocProvider.of<NavigationBloc>(context)
+                              .add(NavigateToProfileScreenEvent());
+                        },
                       )
                     ],
                   ),)
                 ],
             ),
         )
-    );
+    ));
+  }
+
+  onItemClick(int id){
+    setState((){
+      taskList.where((element) => element.id==id).forEach((element) {element.isChecked=!element.isChecked;});
+    });
+  }
+  onItemDelete(int id){
+    setState(() {
+      taskList.removeWhere((element) => element.id==id);
+    });
   }
 }

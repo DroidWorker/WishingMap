@@ -40,7 +40,7 @@ class MoonItem {
 class TaskItem {
   final int id;
   final String text;
-  final bool isChecked;
+  bool isChecked;
 
   TaskItem({required this.id, required this.text, required this.isChecked});
 }
@@ -48,7 +48,7 @@ class TaskItem {
 class WishItem {
   final int id;
   final String text;
-  final bool isChecked;
+  bool isChecked;
 
   WishItem({required this.id, required this.text, required this.isChecked});
 }
@@ -56,7 +56,7 @@ class WishItem {
 class AimItem {
   final int id;
   final String text;
-  final bool isChecked;
+  bool isChecked;
 
   AimItem({required this.id, required this.text, required this.isChecked});
 }

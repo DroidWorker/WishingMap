@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../navigation/navigation_block.dart';
 import '../res/colors.dart';
 
 class AimScreen extends StatelessWidget {
@@ -9,34 +11,43 @@ class AimScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        body: SingleChildScrollView(
+        body: SafeArea(child:SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(15),
+            padding: const EdgeInsets.all(15),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(
+                    const Expanded(
                       child: Align(
                         alignment: Alignment.center,
                         child: Text(
                           "Цель",
                           textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.greytextColor),
                         ),
                       ),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text(
-                        "Сохранить",
-                      ),
+                      child: GestureDetector(
+                        child: const Text(
+                          "Сохранить",
+                          style: TextStyle(color: AppColors.blueTextColor),
+                        ),
+                        onTap: (){
+                          BlocProvider.of<NavigationBloc>(context)
+                              .add(NavigateToAimEditScreenEvent());
+                        },
+                      )
                     ),
                   ],
                 ),
                 const Divider(
                   height: 3,
-                  color: Colors.black,
+                  color: AppColors.dividerGreyColor,
                   indent: 5,
                   endIndent: 5,
                 ),
@@ -44,10 +55,11 @@ class AimScreen extends StatelessWidget {
                 TextField(
                   style: const TextStyle(color: Colors.black), // Черный текст ввода
                   decoration: InputDecoration(
-                    filled: true, // Заливка фона
-                    fillColor: AppColors.fieldFillColor, // Серый фон с полупрозрачностью
-                    hintText: 'Название цели', // Базовый текст
-                    hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)), // Полупрозрачный черный базовый текст
+                    filled: true,
+                    fillColor: AppColors.fieldFillColor,
+                    hintText: 'Название цели',
+                    hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+                    border: InputBorder.none
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -56,10 +68,11 @@ class AimScreen extends StatelessWidget {
                   maxLines: 15,
                   style: const TextStyle(color: Colors.black), // Черный текст ввода
                   decoration: InputDecoration(
-                    filled: true, // Заливка фона
-                    fillColor: AppColors.fieldFillColor, // Серый фон с полупрозрачностью
-                    hintText: 'Опиши подробно свое желание', // Базовый текст
-                    hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)), // Полупрозрачный черный базовый текст
+                    filled: true,
+                    fillColor: AppColors.fieldFillColor,
+                    hintText: 'Опиши подробно свое желание',
+                    hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+                    border: InputBorder.none
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -70,13 +83,21 @@ class AimScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10), // <-- Radius
                       ),
                     ),
-                    onPressed: (){},
-                    child: const Text("Создать задачу")
+                    onPressed: (){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Необходимо созхранить цель'),
+                            duration: Duration(seconds: 3), // Установите желаемую продолжительность отображения
+                          ),
+                        );
+                    },
+                    child: const Text("Создать задачу", style: TextStyle(color: AppColors.greytextColor),)
                 ),
-                const Text("sdgfgfdgfg fdgdf gd gdfg eg", style: TextStyle(fontSize: 10),)
+                const SizedBox(height: 5),
+                const Text("Укажи задачу дня для достижения цели. Помни! Задача актуальна 24 часа", style: TextStyle(fontSize: 10, color: AppColors.greytextColor),)
                 ],
             ),),
         )
-    );
+    ));
   }
 }

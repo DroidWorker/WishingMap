@@ -14,7 +14,7 @@ class CardsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: ListView.builder(
+      body: SafeArea(child:ListView.builder(
         itemCount: items.length,
         itemBuilder: (context, index) {
           return Padding(
@@ -35,6 +35,6 @@ class CardsScreen extends StatelessWidget {
           );
         },
       ),
-    );
+    ));
   }
 }

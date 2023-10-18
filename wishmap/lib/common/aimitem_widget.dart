@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../data/models.dart';
 
 class AimItemWidget extends StatefulWidget{
-  AimItemWidget({super.key, required this.ai});
+  AimItemWidget({super.key, required this.ai, required this.onClick, required this.onDelete});
 
   AimItem ai;
+  Function(int id) onClick;
+  Function(int id) onDelete;
 
   @override
   _AimItem createState() => _AimItem();
@@ -17,17 +19,17 @@ class _AimItem extends State<AimItemWidget>{
     return Row(children: [
       Expanded(child: widget.ai.isChecked ? Text(widget.ai.text,style: const TextStyle(decoration: TextDecoration.lineThrough),) : Text(widget.ai.text) ),
       IconButton(
-        icon: const Icon(Icons.heart_broken),
+        icon: widget.ai.isChecked?Image.asset('assets/icons/target1914412.png'):Image.asset('icons/nountarget423422.png'),
         iconSize: 30,
         onPressed: () {
-
+          widget.onClick(widget.ai.id);
         },
       ),
       IconButton(
-        icon: const Icon(Icons.restore_from_trash_outlined),
+        icon: Image.asset('assets/icons/delete6161554.png'),
         iconSize: 30,
         onPressed: () {
-
+            widget.onDelete(widget.ai.id);
           },
       )
     ],);

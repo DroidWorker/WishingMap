@@ -5,13 +5,16 @@ import 'package:wishmap/data/models.dart';
 import 'package:wishmap/home/aim_create.dart';
 import 'package:wishmap/home/aimedit_screen.dart';
 import 'package:wishmap/home/cards_screen.dart';
+import 'package:wishmap/home/mainsphereedit_screen.dart';
 import 'package:wishmap/home/mytasks_screen.dart';
+import 'package:wishmap/home/taskcreate_screen.dart';
 import 'package:wishmap/home/wish_screen.dart';
 import 'package:wishmap/provider/provider.dart';
 import 'home/myaims_screen.dart';
 import 'home/mywishesScreen.dart';
 import 'home/profile_screen.dart';
 import 'home/spheresoflife_screen.dart';
+import 'home/taskedit_screen.dart';
 import 'navigation/navigation_block.dart';
 import 'home/main_screen.dart';
 import 'home/auth_screen.dart';
@@ -19,7 +22,7 @@ import 'home/auth_screen.dart';
 void main() {
   runApp(
     BlocProvider<NavigationBloc>(
-      create: (context) => NavigationBloc()..add(NavigateToCardsScreenEvent()), // Устанавливаем начальное состояние Screen1
+      create: (context) => NavigationBloc()..add(NavigateToAuthScreenEvent()), // Устанавливаем начальное состояние Screen1
       child: MyApp(),
     ),
   );
@@ -54,6 +57,12 @@ class MyApp extends StatelessWidget {
             return AimsScreen(aimsList: [AimItem(id: 0, text: "text1", isChecked: false), AimItem(id: 1, text: "text2", isChecked: false), AimItem(id: 2, text: "text3", isChecked: true)]);
           } else if (state is NavigationProfileScreenState) {
             return ProfileScreen(pi: ProfileItem(id: 0, name: "text1", surname: "subtext", email: "email", bgcolor: Colors.red));
+          } else if (state is NavigationTaskCreateScreenState) {
+            return const TaskScreen();
+          } else if (state is NavigationTaskEditScreenState) {
+            return TaskEditScreen();
+          } else if (state is NavigationMainSphereEditScreenState) {
+            return const MainSphereEditScreen();
           } else {
             return Container(); // По умолчанию или для других состояний.
           }
