@@ -19,7 +19,7 @@ class _AimItem extends State<AimItemWidget>{
     return Row(children: [
       Expanded(child: widget.ai.isChecked ? Text(widget.ai.text,style: const TextStyle(decoration: TextDecoration.lineThrough),) : Text(widget.ai.text) ),
       IconButton(
-        icon: widget.ai.isChecked?Image.asset('assets/icons/target1914412.png'):Image.asset('icons/nountarget423422.png'),
+        icon: widget.ai.isChecked?Image.asset('assets/icons/target1914412.png'):Image.asset('assets/icons/nountarget423422.png'),
         iconSize: 30,
         onPressed: () {
           widget.onClick(widget.ai.id);

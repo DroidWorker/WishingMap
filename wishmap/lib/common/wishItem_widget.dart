@@ -19,7 +19,7 @@ class _TaskItem extends State<WishItemWidget>{
     return Row(children: [
       Expanded(child: Text(widget.ti.text)),
       IconButton(
-        icon: widget.ti.isChecked?Image.asset('assets/icons/love5110868fill.png'):Image.asset('icons/love5110868.png'),
+        icon: widget.ti.isChecked?Image.asset('assets/icons/love5110868fill.png'):Image.asset('assets/icons/love5110868.png'),
         iconSize: 30,
         onPressed: () {
           widget.onClick(widget.ti.id);

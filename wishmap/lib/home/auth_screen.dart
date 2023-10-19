@@ -177,6 +177,8 @@ class _AuthScreen_State extends State<AuthScreen> {
                             _showError(ex.toString());
                           }
                           BlocProvider.of<NavigationBloc>(context)
+                            .removeLastFromBS();
+                          BlocProvider.of<NavigationBloc>(context)
                               .add(NavigateToMainScreenEvent());
                         }else{
                           String name = _nameController.text;
@@ -186,6 +188,8 @@ class _AuthScreen_State extends State<AuthScreen> {
                           String repPass = _repPassController.text;
                           if(password==repPass) {
                             Repository.registerProfile(name, surname, login, password);
+                            BlocProvider.of<NavigationBloc>(context)
+                                .removeLastFromBS();
                             BlocProvider.of<NavigationBloc>(context)
                                 .add(NavigateToMainScreenEvent());
                           }else{

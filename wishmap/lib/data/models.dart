@@ -4,7 +4,7 @@ class Circle {
   final int id;
   final String text;
   final Color color;
-  final int radius;
+  int radius;
 
   Circle({required this.id, required this.text, required this.color, this.radius=80});
 }

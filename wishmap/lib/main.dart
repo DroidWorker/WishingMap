@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -32,42 +34,52 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Navigation',
+      title: 'wishMap',
       home: BlocBuilder<NavigationBloc, NavigationState>(
         builder: (context, state) {
-          if (state is NavigationMainScreenState) {
-            return MainScreen();
-          } else if (state is NavigationAuthScreenState) {
-            return AuthScreen();
-          } else if (state is NavigationCardsScreenState) {
-            return CardsScreen();
-          } else if (state is NavigationSpheresOfLifeScreenState) {
-            return const SpheresOfLifeScreen();
-          } else if (state is NavigationWishScreenState) {
-            return const WishScreen();
-          } else if (state is NavigationAimCreateScreenState) {
-            return const AimScreen();
-          } else if (state is NavigationAimEditScreenState) {
-            return AimEditScreen();
-          } else if (state is NavigationTasksScreenState) {
-            return TasksScreen(taskList: [TaskItem(id: 0, text: "text1", isChecked: false), TaskItem(id: 1, text: "text2", isChecked: false), TaskItem(id: 2, text: "text3", isChecked: true)]);
-          } else if (state is NavigationWishesScreenState) {
-            return WishesScreen(wishesList: [WishItem(id: 0, text: "text1", isChecked: false), WishItem(id: 1, text: "text2", isChecked: false), WishItem(id: 2, text: "text3", isChecked: true)]);
-          } else if (state is NavigationAimsScreenState) {
-            return AimsScreen(aimsList: [AimItem(id: 0, text: "text1", isChecked: false), AimItem(id: 1, text: "text2", isChecked: false), AimItem(id: 2, text: "text3", isChecked: true)]);
-          } else if (state is NavigationProfileScreenState) {
-            return ProfileScreen(pi: ProfileItem(id: 0, name: "text1", surname: "subtext", email: "email", bgcolor: Colors.red));
-          } else if (state is NavigationTaskCreateScreenState) {
-            return const TaskScreen();
-          } else if (state is NavigationTaskEditScreenState) {
-            return TaskEditScreen();
-          } else if (state is NavigationMainSphereEditScreenState) {
-            return const MainSphereEditScreen();
-          } else {
-            return Container(); // По умолчанию или для других состояний.
-          }
+          return WillPopScope(
+            onWillPop: () async {
+              final shouldPop = await context.read<NavigationBloc>().handleBackPress();
+              return shouldPop;
+            },
+            child: _buildScreenForState(state),
+          );
         },
       ),
     );
+  }
+
+  Widget _buildScreenForState(NavigationState state) {
+    if (state is NavigationMainScreenState) {
+      return MainScreen();
+    } else if (state is NavigationAuthScreenState) {
+      return AuthScreen();
+    } else if (state is NavigationCardsScreenState) {
+      return CardsScreen();
+    } else if (state is NavigationSpheresOfLifeScreenState) {
+      return const SpheresOfLifeScreen();
+    } else if (state is NavigationWishScreenState) {
+      return const WishScreen();
+    } else if (state is NavigationAimCreateScreenState) {
+      return const AimScreen();
+    } else if (state is NavigationAimEditScreenState) {
+      return AimEditScreen();
+    } else if (state is NavigationTasksScreenState) {
+      return TasksScreen(taskList: [TaskItem(id: 0, text: "text1", isChecked: false), TaskItem(id: 1, text: "text2", isChecked: false), TaskItem(id: 2, text: "text3", isChecked: true)]);
+    } else if (state is NavigationWishesScreenState) {
+      return WishesScreen(wishesList: [WishItem(id: 0, text: "text1", isChecked: false), WishItem(id: 1, text: "text2", isChecked: false), WishItem(id: 2, text: "text3", isChecked: true)]);
+    } else if (state is NavigationAimsScreenState) {
+      return AimsScreen(aimsList: [AimItem(id: 0, text: "text1", isChecked: false), AimItem(id: 1, text: "text2", isChecked: false), AimItem(id: 2, text: "text3", isChecked: true)]);
+    } else if (state is NavigationProfileScreenState) {
+      return ProfileScreen(pi: ProfileItem(id: 0, name: "text1", surname: "subtext", email: "email", bgcolor: Colors.red));
+    } else if (state is NavigationTaskCreateScreenState) {
+      return const TaskScreen();
+    } else if (state is NavigationTaskEditScreenState) {
+      return TaskEditScreen();
+    } else if (state is NavigationMainSphereEditScreenState) {
+      return const MainSphereEditScreen();
+    } else {
+      return Container(); // По умолчанию или для других состояний.
+    }
   }
 }
